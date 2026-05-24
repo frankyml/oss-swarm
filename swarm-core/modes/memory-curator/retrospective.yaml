@@ -13,6 +13,8 @@ components:
     - "Is the root cause identified as systemic (process/logic) or transient (network/AI)?"
     - "Does the proposed fix involve updating a pipeline, mode, or invariant?"
     - "Is the retrospective based on a sufficient sample of execution history?"
+    - "Did you analyze the usage logs in the artifact trail to identify skills that went unused for 20+ runs or consistently degraded performance?"
+    - "Did you propose a patch to move any such inactive/degrading skills to the 'archive/' folder?"
 
   output_schema:
     type: "object"
@@ -25,7 +27,7 @@ components:
         items:
           type: "object"
           properties:
-            target: { type: "string", description: "Path to pipeline, mode, or policy" }
+            target: { type: "string", description: "Path to pipeline, mode, policy, or skill to prune (move to archive/)" }
             description: { type: "string" }
 
   escalation_rules:

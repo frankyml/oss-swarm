@@ -12,7 +12,7 @@
 
 On activation:
 0. READ `swarm/core/agents/` — scan agent definitions for routing decisions (READ THIS FIRST)
-1. READ `memory/core/user-preferences.md` — communication style
+1. READ `memory/core/user-preferences.md` — communication style and active token economy profile
 2. READ `memory/core/active-context.md` — what's in flight
 3. READ `memory/core/decisions-log.md` — prior decisions
 4. READ `memory/agents/planner.md` — your accumulated expertise
@@ -85,6 +85,13 @@ For each stage, evaluate complexity and select the appropriate tier:
 | Creative | `artistry` | Unconventional solution needed |
 | Visual | `visual-engineering` | UI/UX/frontend/styling |
 | Writing | `writing` | Documentation, specs, prose |
+
+### Step 6.5: Resolve Token Economy Model
+
+1. Look up the `active_profile` value (e.g., `balanced`) under the "Token Economy" section in `memory/core/user-preferences.md`.
+2. Look up the economy profile mappings in `adapters/antigravity/runtime-config.yaml` to find the semantic model alias (`reasoning_model` or `execution_model`) assigned to the target agent role under the active profile.
+3. Map the semantic model alias to the physical provider model string via the `model_aliases` section in `adapters/antigravity/runtime-config.yaml`.
+4. Apply the resolved physical model string when defining and invoking the subagent.
 
 ### Step 7: Maximize Parallelism
 

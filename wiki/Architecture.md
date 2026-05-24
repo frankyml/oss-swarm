@@ -23,3 +23,6 @@ Instead of brittle rule-based routing, the Planner uses an LLM-powered **Semanti
 
 ### Self-Improvement & Invariants
 The swarm can update its own `memory/` files (Safe) and propose policy mutations (Guarded). However, strict invariants (`policies/invariants.yaml`) ensure the swarm can never drift from its goals or execute destructive actions without explicit human approval.
+
+### Provider-Agnostic Token Economy
+OSS-Swarm utilizes semantic model aliases (`reasoning_model` vs `execution_model`) mapped to user-defined economy profiles. This allows the Planner to dynamically throttle token consumption and execution speed by downgrading non-critical subagents to faster, cheaper models, entirely independent of the underlying LLM provider.

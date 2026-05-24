@@ -12,13 +12,33 @@ toolmap:
   web_search: "search_web"
   directory_list: "list_dir"
 
-model_tiering_policy:
-  # Complex reasoning tasks leverage Gemini Pro models
-  planner: "gemini-pro"
-  researcher: "gemini-pro"
-  reviewer: "gemini-pro"
-  
-  # Formatting/Execution tasks leverage Gemini Flash models for speed and cost efficiency
-  coder: "gemini-flash"
-  spec-writer: "gemini-flash"
-  memory-curator: "gemini-flash"
+# 1. Provider Mapping (User configures this based on their setup)
+model_aliases:
+  reasoning_model: "gemini-pro"     # e.g., could be gpt-4o, claude-3-opus
+  execution_model: "gemini-flash"   # e.g., could be gpt-4o-mini, claude-3-haiku
+
+# 2. Economy Profiles (Portable, uses aliases instead of hardcoded names)
+economy_profiles:
+  low_consumption:
+    planner: "execution_model"
+    researcher: "execution_model"
+    reviewer: "execution_model"
+    coder: "execution_model"
+    spec-writer: "execution_model"
+    memory-curator: "execution_model"
+
+  balanced:
+    planner: "reasoning_model"
+    researcher: "execution_model"
+    reviewer: "reasoning_model"
+    coder: "execution_model"
+    spec-writer: "execution_model"
+    memory-curator: "execution_model"
+
+  high_performance:
+    planner: "reasoning_model"
+    researcher: "reasoning_model"
+    reviewer: "reasoning_model"
+    coder: "reasoning_model"
+    spec-writer: "reasoning_model"
+    memory-curator: "execution_model"

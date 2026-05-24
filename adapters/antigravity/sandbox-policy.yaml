@@ -8,38 +8,75 @@ sandbox_tiers:
     tool_allowlist: ["*"]
     path_restrictions: []
 
-  # Tier 2/Tier 3 are external packages that require strict jailing
-  tier_2_and_3:
-    description: "Untrusted External Packages"
-    
+  # Tier 2 packages represent standard external extensions
+  tier_2:
+    description: "Standard External Packages"
     restricted_tools:
-      # Terminal access is strictly blocked for untrusted packages
       - name: "run_command"
         action: "block"
         escalation: "planner_approval_required"
-    
     file_operations:
-      # File modifications are restricted to the specific package memory namespace
       allowed_paths:
         - "memory/packages/{package_name}/*"
-      
       restricted_operations:
         - tool: "write_to_file"
           condition: "target_path NOT IN allowed_paths"
           action: "block"
           escalation: "planner_approval_required"
-        
         - tool: "replace_file_content"
           condition: "target_path NOT IN allowed_paths"
           action: "block"
           escalation: "planner_approval_required"
-          
         - tool: "multi_replace_file_content"
           condition: "target_path NOT IN allowed_paths"
           action: "block"
           escalation: "planner_approval_required"
 
+  # Tier 3 packages/skills are self-authored or highly untrusted
+  tier_3:
+    description: "Quarantined Self-Authored and Untrusted Skills"
+    restricted_tools:
+      # Network tools are completely blocked, no planner approval bypass allowed
+      - name: "search_web"
+        action: "block"
+        escalation: "halt_pipeline"
+      - name: "execute_url"
+        action: "block"
+        escalation: "halt_pipeline"
+      # Terminal access is strictly blocked, no bypass allowed
+      - name: "run_command"
+        action: "block"
+        escalation: "halt_pipeline"
+    file_operations:
+      # Jailed read/write access: Only packages folder and synthetic TaskProfile allowed paths
+      # Cannot access global .git/ or system dotfiles (.env, config, etc.)
+      allowed_paths:
+        - "memory/packages/{package_name}/*"
+        - "{task_profile_allowed_paths}"
+      restricted_operations:
+        - tool: "view_file"
+          condition: "target_path NOT IN allowed_paths OR target_path MATCHES '.*\\/\\.git\\/.*|.*\\/\\..*'"
+          action: "block"
+          escalation: "halt_pipeline"
+        - tool: "write_to_file"
+          condition: "target_path NOT IN allowed_paths OR target_path MATCHES '.*\\/\\.git\\/.*|.*\\/\\..*'"
+          action: "block"
+          escalation: "halt_pipeline"
+        - tool: "replace_file_content"
+          condition: "target_path NOT IN allowed_paths OR target_path MATCHES '.*\\/\\.git\\/.*|.*\\/\\..*'"
+          action: "block"
+          escalation: "halt_pipeline"
+        - tool: "multi_replace_file_content"
+          condition: "target_path NOT IN allowed_paths OR target_path MATCHES '.*\\/\\.git\\/.*|.*\\/\\..*'"
+          action: "block"
+          escalation: "halt_pipeline"
+
 default_escalation_policy:
   # When a sandboxed agent attempts an out-of-bounds action
   trigger: "action == 'block' AND escalation == 'planner_approval_required'"
   action: "Send message to Planner detailing the requested operation, the tool, and the target. Wait for explicit Planner approval before executing."
+
+critical_escalation_policy:
+  # When a quarantined agent attempts a critical breach
+  trigger: "action == 'block' AND escalation == 'halt_pipeline'"
+  action: "Terminate execution and halt pipeline immediately. Log security violation. Escalate security breach details directly to user."

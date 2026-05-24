@@ -23,8 +23,10 @@ Assemble the final `system_prompt` for the `define_subagent` tool by concatenati
 4. **Output Schema**: If a mode dictates an `output_schema`, strictly instruct the subagent to structure its final artifact or response according to that schema.
 5. **Escalation Rules**: Append the `escalation_rules` from the modes, instructing the subagent to halt and use `send_message` back to the Planner if the conditions are met.
 
-### Step 4: Model Tier Assignment
-Check `adapters/antigravity/runtime-config.yaml` to determine the appropriate model tier for the target agent. Ensure the requested reasoning complexity aligns with the model tier (e.g., Gemini Pro for Reviewer, Gemini Flash for Coder).
+### Step 4: Model Tier Assignment (Token Economy)
+1. Read `memory/core/user-preferences.md` to determine the `active_profile` (e.g., `balanced`).
+2. Read `adapters/antigravity/runtime-config.yaml` to find the semantic model alias assigned to the target agent under that specific economy profile (e.g., `reasoning_model`).
+3. Resolve the semantic alias using the `model_aliases` mapping at the top of the config to find the exact provider model string (e.g., `gemini-pro`).
 
 ### Step 5: Define and Invoke
 1. Call `define_subagent` with the assembled `system_prompt` and an appropriate `description`.

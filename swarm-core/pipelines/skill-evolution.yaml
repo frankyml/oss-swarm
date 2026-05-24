@@ -1,0 +1,49 @@
+# swarm/core/pipelines/skill-evolution.yaml
+id: "pipeline.skill-evolution"
+description: "Skills self-improvement pipeline: auto-authoring, sandboxed benchmarking, evaluation, validation, and proposal"
+
+stages:
+  - id: "author"
+    agent: "coder"
+    modes: ["skill-author"]
+    parallel: false
+    mandatory: true
+    contract:
+      must_provide: ["new_skill_mode.yaml"]
+      must_not_provide: ["production_code_mutations"]
+
+  - id: "benchmark"
+    agent: "researcher"
+    modes: ["verify"]
+    parallel: false
+    mandatory: true
+    contract:
+      must_provide: ["benchmark_results.json"]
+      must_not_provide: ["outbound_network_requests", "global_filesystem_writes"]
+
+  - id: "evaluate"
+    agent: "reviewer"
+    modes: ["qa"]
+    parallel: false
+    mandatory: true
+    contract:
+      must_provide: ["evaluation_report.json"]
+      must_not_provide: []
+
+  - id: "security_vetting"
+    agent: "reviewer"
+    modes: ["security"]
+    parallel: false
+    mandatory: true
+    contract:
+      must_provide: ["security_verdict.json"]
+      must_not_provide: ["code_fixes"]
+
+  - id: "propose"
+    agent: "memory-curator"
+    modes: ["proposal-validation"]
+    parallel: false
+    mandatory: true
+    contract:
+      must_provide: ["skill_proposal_patch.patch"]
+      must_not_provide: ["production_code_mutations"]

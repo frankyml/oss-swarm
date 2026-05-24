@@ -1,0 +1,37 @@
+# swarm/core/modes/coder/skill-author.yaml
+id: "coder.skill-author"
+host_agent: "coder"
+
+components:
+  lens_preamble: >
+    You are operating in SKILL-AUTHOR mode. Focus on defining a new mode or agent capability
+    in the standard YAML format. Ensure that the generated skill matches the required
+    specification: clear lens_preamble, explicit checklist, strict output_schema,
+    and appropriate escalation_rules. Focus on safety and avoiding any unsafe tool usages
+    in the new skill definition.
+
+  checklist:
+    - "Does the new skill have a unique, descriptive ID and specify the correct host_agent?"
+    - "Is the lens_preamble focused and clear about the skill's specific responsibilities?"
+    - "Are the checklist items actionable, precise, and testable?"
+    - "Does the output_schema enforce required types, properties, and constraints?"
+    - "Are the escalation_rules concrete and triggered by specific, valid JSON schema fields?"
+
+  output_schema:
+    type: "object"
+    required: ["authored_skill_path", "schema_validation_status", "skill_summary"]
+    properties:
+      authored_skill_path:
+        type: "string"
+        description: "The filepath where the new skill's YAML configuration was authored."
+      schema_validation_status:
+        type: "string"
+        enum: ["success", "failed"]
+      skill_summary:
+        type: "string"
+        description: "A summary of what the new skill does, its target host agent, and trigger conditions."
+
+  escalation_rules:
+    - condition: "schema_validation_status === 'failed'"
+      action: "halt_pipeline"
+      reason: "The authored skill did not pass initial schema validation."

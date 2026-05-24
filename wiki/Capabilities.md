@@ -22,7 +22,7 @@ For example, a `Reviewer` can be assigned the `Security` mode. It receives a spe
 **Available Modes include:**
 - **Reviewer**: `architecture`, `security`, `qa`, `contract`, `product`, `failure`, `friction`.
 - **Researcher**: `survey`, `compare`, `verify`.
-- **Coder**: `implement`, `patch`, `refactor`, `migrate`.
+- **Coder**: `implement`, `patch`, `refactor`, `migrate`, `skill-author`.
 
 ## Pipeline Templates
 
@@ -31,11 +31,12 @@ Pipelines dictate the execution graph. Standard pipelines include:
 - `spec-to-issues`: Break down a feature into GitHub/Jira tickets.
 - `implement`: Code -> Test -> Review (Security/QA/Architecture) -> Memory Consolidate.
 - `audit`: Deep codebase reviews looking for prioritized gaps.
+- `skill-evolution`: Autonomously discover, author, benchmark, evaluate, and propose new agent skills.
 
-## External Packages (Trust Tiers)
+## External Packages & Custom Skills (Trust Tiers)
 
-You can extend the swarm using the `swarm-packages/` directory.
+You can extend the swarm using custom skills or the `swarm-packages/` directory.
 
 - **Tier 1 (Behaviors)**: Low risk, read-only context injections.
-- **Tier 2 (Modes/Agents)**: Medium risk. Jailed to their own memory namespace. Strictly sandboxed in Antigravity.
-- **Tier 3 (Pipelines/Policies)**: High risk. Require strict human approval for routing modifications.
+- **Tier 2 (Modes/Agents)**: Medium risk. Jailed to their own memory namespace. Strictly sandboxed.
+- **Tier 3 (Quarantined/Policies)**: High risk. Includes newly authored, quarantined self-improving skills and policy modifications. Under Antigravity, Tier 3 limits file access strictly to synthetic TaskProfile scopes and blocks terminal execution and web requests with immediate execution halts (no bypass allowed).
