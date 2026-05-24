@@ -1,0 +1,126 @@
+risk_policy:
+  description: >
+    Canonical risk and review-depth classification policy for the Portable Core.
+    The planner assigns exactly one risk score and one review depth before selecting
+    reviewer modes or pipeline validation behavior.
+
+  risk_signals:
+    score_0:
+      - docs
+      - formatting
+      - read-only
+      - memory_edits
+      - safe_config
+
+    score_1:
+      - routine_logic
+      - internal_refactors
+      - safe_config
+      - bounded_non_public_changes
+
+    score_2:
+      - api_changes
+      - data_access
+      - dependencies
+      - deploy
+      - infrastructure_as_code
+      - runtime_config
+
+    score_3:
+      - auth
+      - secrets
+      - crypto
+      - permissions
+      - sessions
+      - tenant_isolation
+      - command_execution
+      - internet_facing
+
+  operational_risk_signals:
+    - deploy
+    - infrastructure_as_code
+    - runtime_config
+    - workflow_runtime
+    - automation_control_flow
+    - retry_or_resume_logic
+
+  scoring_guidance:
+    highest_matching_score_wins: true
+    mutating_is_not_sufficient_for_high_risk: true
+    examples:
+      score_0:
+        - "Update README"
+        - "Fix comment formatting"
+        - "Read Jira or inspect logs"
+      score_1:
+        - "Rename variable in internal module"
+        - "Refactor helper with unchanged behavior"
+      score_2:
+        - "Add REST endpoint"
+        - "Modify dependency set"
+        - "Change Dockerfile or deployment config"
+      score_3:
+        - "Modify login flow"
+        - "Handle tokens, permissions, or CORS"
+        - "Expose new webhook or public auth boundary"
+
+  review_depth:
+    depth_0: "non-mutating OR riskScore == 0"
+    depth_1: "mutating + riskScore 1 + <=5 files + existing patterns"
+    depth_2: "mutating + riskScore >= 2 OR cross-module OR new patterns"
+
+  review_depth_interpretation:
+    depth_0:
+      meaning: "No independent deep review required beyond direct planner or actor checks."
+      typical_scope:
+        - read_only
+        - documentation_only
+    depth_1:
+      meaning: "Bounded mutating work with lightweight independent validation."
+      typical_scope:
+        - small_refactors
+        - routine_internal_logic
+    depth_2:
+      meaning: "Cross-boundary or elevated-risk work requiring deep validation."
+      typical_scope:
+        - public_contract_changes
+        - multi_module_changes
+        - security_or_operational_risk
+
+  escalation_triggers:
+    - signal: unclear_trust_boundaries
+      escalate_to_at_least: 2
+      rationale: "Unknown trust boundaries imply integration or exposure risk."
+    - signal: authorization_or_permission_logic_encountered
+      escalate_to: 3
+      rationale: "Permission logic is always critical-risk."
+    - signal: secret_or_credential_handling_discovered
+      escalate_to: 3
+      rationale: "Secret material requires maximum risk tier."
+    - signal: external_input_without_validation
+      escalate_to_at_least: 2
+      rationale: "Unsafe external input creates elevated exploit potential."
+
+  completion_requirements:
+    mutating_work_must_have:
+      - task_profile_recorded
+      - required_review_hooks_executed
+      - review_results_acknowledged
+
+  derived_flags:
+    authOrSecrets_is_true_when:
+      - auth
+      - secrets
+      - permissions
+      - sessions
+      - tenant_isolation
+    publicSurface_is_true_when:
+      - api_changes
+      - internet_facing
+      - cli_contract_change
+      - public_schema_change
+    operationalRisk_is_true_when:
+      - deploy
+      - infrastructure_as_code
+      - runtime_config
+      - workflow_runtime

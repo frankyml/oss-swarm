@@ -1,0 +1,145 @@
+mode_resolver:
+  description: >
+    Deterministic rules that transform a completed TaskProfile plus current pipeline-stage
+    facts into an ordered list of reviewer assurance lenses. Rules are evaluated in the
+    order declared below. Every matching rule pushes exactly one mode into the assurance
+    lens list. Duplicate pushes are removed while preserving first-match order.
+
+  inputs:
+    required_task_profile_fields:
+      - reviewDepth
+      - riskScore
+      - artifactType
+      - publicSurface
+      - userFacing
+      - authOrSecrets
+      - externalIntegration
+    required_stage_fields:
+      - stageId
+      - acceptanceCriteriaPresent
+      - operationalRisk
+      - cliOrAgentUx
+
+  output:
+    target_field: assuranceLenses
+    semantics: ordered_set
+
+  rules:
+    - id: architecture_for_deep_code_review
+      priority: 10
+      condition:
+        all:
+          - field: reviewDepth
+            equals: 2
+          - field: artifactType
+            equals: "code"
+      action:
+        type: push_mode
+        mode: "reviewer.architecture"
+      explanation: "Deep code review always includes an architecture lens."
+
+    - id: security_for_high_risk_public_or_secret_changes
+      priority: 20
+      condition:
+        all:
+          - field: riskScore
+            in: [2, 3]
+          - any:
+              - field: authOrSecrets
+                equals: true
+              - field: publicSurface
+                equals: true
+      action:
+        type: push_mode
+        mode: "reviewer.security"
+      explanation: "High-risk changes involving exposure boundaries or secret handling require security review."
+
+    - id: qa_for_delivery_gate_with_acceptance_criteria
+      priority: 30
+      condition:
+        all:
+          - field: stageId
+            equals: "delivery_gate"
+          - field: acceptanceCriteriaPresent
+            equals: true
+      action:
+        type: push_mode
+        mode: "reviewer.qa"
+      explanation: "Delivery gates with explicit acceptance criteria require QA validation."
+
+    - id: contract_for_integrations_and_public_interfaces
+      priority: 40
+      condition:
+        any:
+          - field: externalIntegration
+            equals: true
+          - field: publicSurface
+            equals: true
+      action:
+        type: push_mode
+        mode: "reviewer.contract"
+      explanation: "Interface changes and integrations require contract review."
+
+    - id: product_for_user_facing_specs
+      priority: 50
+      condition:
+        all:
+          - field: userFacing
+            equals: true
+          - field: artifactType
+            equals: "spec"
+      action:
+        type: push_mode
+        mode: "reviewer.product"
+      explanation: "User-facing specifications require product alignment review."
+
+    - id: failure_for_workflows_and_operational_risk
+      priority: 60
+      condition:
+        any:
+          - field: artifactType
+            equals: "workflow"
+          - field: operationalRisk
+            equals: true
+      action:
+        type: push_mode
+        mode: "reviewer.failure"
+      explanation: "Workflow and operationally risky changes require failure-mode review."
+
+    - id: friction_for_user_or_agent_experience_changes
+      priority: 70
+      condition:
+        any:
+          - field: userFacing
+            equals: true
+          - field: cliOrAgentUx
+            equals: true
+      action:
+        type: push_mode
+        mode: "reviewer.friction"
+      explanation: "Changes affecting end-user, CLI, or agent experience require friction review."
+
+  post_processing:
+    deduplicate: true
+    preserve_first_match_order: true
+    empty_result_behavior: "return_empty_assurance_lenses"
+
+  examples:
+    - name: deep_code_change_with_auth
+      input:
+        reviewDepth: 2
+        riskScore: 3
+        artifactType: "code"
+        publicSurface: true
+        userFacing: false
+        authOrSecrets: true
+        externalIntegration: true
+        stageId: "security_audit"
+        acceptanceCriteriaPresent: false
+        operationalRisk: false
+        cliOrAgentUx: false
+      output:
+        assuranceLenses:
+          - "reviewer.architecture"
+          - "reviewer.security"
+          - "reviewer.contract"

@@ -1,0 +1,36 @@
+id: "spec-writer.story-breakdown"
+host_agent: "spec-writer"
+
+components:
+  lens_preamble: >
+    You are operating in STORY-BREAKDOWN mode. Focus on granularity, clarity, and
+    actionability. Transform high-level epics or features into small, atomic tasks
+    with clear acceptance criteria.
+
+  checklist:
+    - "Is each task small enough to be completed in a single iteration/turn?"
+    - "Does every task have specific, measurable acceptance criteria?"
+    - "Are dependencies between tasks clearly identified?"
+    - "Is the technical path for implementation well-defined for each task?"
+    - "Does the breakdown cover all requirements of the parent epic/story?"
+
+  output_schema:
+    type: "object"
+    required: ["parent_epic", "tasks", "total_estimated_effort"]
+    properties:
+      parent_epic: { type: "string" }
+      tasks:
+        type: "array"
+        items:
+          type: "object"
+          properties:
+            id: { type: "string" }
+            summary: { type: "string" }
+            acceptance_criteria: { type: "array", items: { type: "string" } }
+            technical_notes: { type: "string" }
+      total_estimated_effort: { type: "string", enum: ["low", "medium", "high"] }
+
+  escalation_rules:
+    - condition: "tasks.length > 10"
+      action: "request_hierarchical_breakdown"
+      reason: "Too many atomic tasks for a single flat list. Suggest creating intermediate milestones."

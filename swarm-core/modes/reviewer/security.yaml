@@ -1,0 +1,48 @@
+# swarm/core/modes/reviewer/security.yaml
+id: "reviewer.security"
+host_agent: "reviewer"
+
+components:
+  lens_preamble: >
+    You are operating in SECURITY mode. Your sole focus is identifying vulnerabilities,
+    authentication bypasses, secret leaks, and boundary violations. Ignore code style,
+    performance (unless a DoS vector), and functional completeness. Assume all external
+    inputs are malicious.
+
+  checklist:
+    - "Are any secrets, tokens, or credentials hardcoded or logged?"
+    - "Is all user input validated, sanitized, and escaped before processing?"
+    - "Are authorization boundaries enforced on all new or modified public interfaces?"
+    - "Does the change introduce injection vectors (SQL, Command, XSS, SSRF)?"
+    - "Are insecure cryptographic primitives used?"
+
+  output_schema:
+    type: "object"
+    required: ["verdict", "critical_vulnerabilities", "warnings", "remediation_requirements"]
+    properties:
+      verdict:
+        type: "string"
+        enum: ["pass", "fail"]
+      critical_vulnerabilities:
+        type: "array"
+        items:
+          type: "object"
+          properties:
+            line_range: { type: "string" }
+            cwe: { type: "string" }
+            description: { type: "string" }
+      warnings:
+        type: "array"
+        items: { type: "string" }
+      remediation_requirements:
+        type: "array"
+        items: { type: "string" }
+
+  escalation_rules:
+    - condition: "critical_vulnerabilities.length > 0"
+      action: "halt_pipeline"
+      reason: "Immediate security remediation required before further validation."
+    - condition: "authOrSecrets == true AND architecture is unverified"
+      action: "widen_review"
+      target_mode: "reviewer.architecture"
+      reason: "Security boundary change requires architecture validation."

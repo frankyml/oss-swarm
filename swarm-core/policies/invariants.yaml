@@ -1,0 +1,33 @@
+# Swarm Invariants — NEVER self-modifiable
+
+invariants:
+  - id: goal-integrity
+    rule: "No agent, feedback loop, or reviewer may alter the user's original intent."
+
+  - id: human-approval-destructive
+    rule: "Human approval required for all destructive actions (issue creation, code push, PR merge, deploy)."
+
+  - id: memory-ownership-absolute
+    rule: "Memory ownership boundaries are absolute. Agents cannot edit outside their owned namespace."
+
+  - id: max-feedback-iterations
+    rule: "MAX_FEEDBACK_ITERATIONS = 2. If exceeded, surface to human."
+
+  - id: max-agent-retries
+    rule: "MAX_AGENT_RETRIES = 2. If exceeded, surface to human."
+
+  - id: no-secret-persistence
+    rule: "No credentials, tokens, or secrets may be persisted in memory files or agent outputs."
+
+  - id: adapter-interface-contract
+    rule: "The RuntimeAdapter interface contract is immutable during runtime. Changes require full migration cycle."
+
+  - id: core-adapter-separation
+    rule: "Complete distinction between portable core and runtime adapter. No backend-specific logic in core."
+
+external_packages:
+  override_core_agents: never
+  policy_mutation: proposal_only
+  undeclared_capabilities: rejected
+  memory_namespace: "memory/packages/{package-name}/"
+  floating_versions: forbidden

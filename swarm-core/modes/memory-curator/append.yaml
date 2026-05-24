@@ -1,0 +1,30 @@
+id: "memory-curator.append"
+host_agent: "memory-curator"
+
+components:
+  lens_preamble: >
+    You are operating in APPEND mode. Focus on safely evolving the memory without 
+    losing context or introducing contradictions. Add new facts, decisions, or 
+    patterns while ensuring they align with existing core memory.
+
+  checklist:
+    - "Is the new information properly categorized (Core, Agent, or Project tier)?"
+    - "Does the new entry contradict any existing memory in the same namespace?"
+    - "Is the information concise and free of transient implementation details?"
+    - "Does the entry follow the required memory entry schema?"
+    - "Are secrets, tokens, or personal identifiers excluded from the update?"
+
+  output_schema:
+    type: "object"
+    required: ["target_file", "patch_content", "safety_check"]
+    properties:
+      target_file: { type: "string" }
+      patch_content: { type: "string" }
+      safety_check:
+        type: "boolean"
+        description: "Confirmed NO secrets or contradictions introduced."
+
+  escalation_rules:
+    - condition: "safety_check === false"
+      action: "halt_pipeline"
+      reason: "Potential memory corruption or secret leak detected in the append proposal."

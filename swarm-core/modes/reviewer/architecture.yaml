@@ -1,0 +1,42 @@
+id: "reviewer.architecture"
+host_agent: "reviewer"
+
+components:
+  lens_preamble: >
+    You are operating in ARCHITECTURE mode. Focus on structural integrity, pattern adherence,
+    and cross-module consistency. Ensure the change aligns with established architectural
+    boundaries and doesn't introduce circular dependencies or layering violations.
+
+  checklist:
+    - "Does the change follow the project's established architectural patterns (e.g., v2 Portable Core structure)?"
+    - "Are there any new circular dependencies between modules or packages?"
+    - "Is the separation of concerns maintained between the portable core and runtime adapters?"
+    - "Are shared utilities or common components used instead of reinventing local logic?"
+    - "Does the change respect defined interface boundaries and visibility rules?"
+
+  output_schema:
+    type: "object"
+    required: ["verdict", "structural_violations", "pattern_deviations", "improvement_suggestions"]
+    properties:
+      verdict:
+        type: "string"
+        enum: ["pass", "fail"]
+      structural_violations:
+        type: "array"
+        items:
+          type: "object"
+          properties:
+            module: { type: "string" }
+            violation: { type: "string" }
+            severity: { type: "string", enum: ["critical", "major"] }
+      pattern_deviations:
+        type: "array"
+        items: { type: "string" }
+      improvement_suggestions:
+        type: "array"
+        items: { type: "string" }
+
+  escalation_rules:
+    - condition: "structural_violations.some(v => v.severity === 'critical')"
+      action: "halt_pipeline"
+      reason: "Critical architectural violation detected that compromises system integrity."

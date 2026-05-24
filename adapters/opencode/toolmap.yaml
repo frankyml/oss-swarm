@@ -1,0 +1,36 @@
+mappings:
+  invoke:
+    tool: "task"
+    params:
+      category: "$tier"
+      subagent_type: "$agentType"
+      load_skills: "$skills"
+      prompt: "$prompt"
+      run_in_background: false
+  invokeParallel:
+    tool: "task"
+    params:
+      category: "$tier"
+      subagent_type: "$agentType"
+      load_skills: "$skills"
+      prompt: "$prompt"
+      run_in_background: true
+  readRef:
+    tool: "read"
+    params:
+      filePath: "$uri"
+  writeArtifact:
+    tool: "write"
+    params:
+      filePath: "$uri"
+      content: "$content"
+  requestApproval:
+    tool: "question"
+    params:
+      questions: ["$prompt"]
+  recordEvent:
+    tool: "write"
+    params:
+      filePath: "swarm/runs/${runId}/events.jsonl"
+      content: "$eventJson"
+      append: true

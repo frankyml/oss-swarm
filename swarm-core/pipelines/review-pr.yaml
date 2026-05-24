@@ -1,0 +1,46 @@
+id: "pipeline.review-pr"
+description: "Multi-dimensional review of a pull request"
+
+stages:
+  - id: "core_review_layer"
+    parallel: true
+    mandatory: true
+    sub_stages:
+      - id: "architecture_review"
+        agent: "reviewer"
+        modes: ["architecture"]
+        contract:
+          must_provide: ["architecture_verdict.json"]
+          must_not_provide: []
+
+      - id: "security_review"
+        agent: "reviewer"
+        modes: ["security"]
+        contract:
+          must_provide: ["security_verdict.json"]
+          must_not_provide: []
+
+      - id: "qa_review"
+        agent: "reviewer"
+        modes: ["qa"]
+        contract:
+          must_provide: ["qa_verdict.json"]
+          must_not_provide: []
+
+  - id: "friction_analysis"
+    agent: "reviewer"
+    modes: ["friction"]
+    parallel: false
+    mandatory: false
+    contract:
+      must_provide: ["ux_friction_report.md"]
+      must_not_provide: []
+
+  - id: "memory_consolidation"
+    agent: "memory-curator"
+    modes: ["append"]
+    parallel: false
+    mandatory: true
+    contract:
+      must_provide: ["memory_patch"]
+      must_not_provide: ["workspace_artifacts"]

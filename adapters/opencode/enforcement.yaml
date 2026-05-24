@@ -1,0 +1,115 @@
+id: invariant-enforcement
+version: 0.1.0
+description: >
+  Defines how the adapter enforces invariants at runtime.
+  Invariants are defined in swarm/core/policies/invariants.yaml.
+  This file specifies the enforcement mechanisms — when checks run, what triggers violations, and what happens on breach.
+
+enforcement_points:
+
+  pre_delegation:
+    description: Checks before any agent delegation is dispatched
+    checks:
+      - id: goal-integrity-check
+        invariant_ref: goal-integrity
+        mechanism: >
+          Compare delegated task prompt against original user goal stored in run manifest.
+          Flag if the task has no traceable connection to the original request.
+        action_on_violation: block_delegation
+
+      - id: core-adapter-separation-check
+        invariant_ref: core-adapter-separation
+        mechanism: >
+          Reject any delegation prompt that references runtime-specific constructs
+          (task_id, session_id, tool names) in core-layer files.
+        action_on_violation: block_delegation
+
+  pre_write:
+    description: Checks before any file write or memory mutation
+    checks:
+      - id: memory-ownership-check
+        invariant_ref: memory-ownership-absolute
+        mechanism: >
+          Verify the writing agent owns the target memory namespace.
+          Agent ownership map: planner→core/, coder→agents/coder.md,
+          researcher→agents/researcher.md, etc.
+          Packages write only to memory/packages/{package-name}/.
+        action_on_violation: reject_write
+
+      - id: no-secret-check
+        invariant_ref: no-secret-persistence
+        mechanism: >
+          Scan content for common secret patterns (API keys, tokens, passwords)
+          before writing to any memory or output file.
+          Pattern list: Bearer tokens, AWS keys, base64-encoded credentials,
+          environment variable values matching known secret names.
+        action_on_violation: reject_write_and_alert
+
+      - id: invariant-file-immutability
+        invariant_ref: adapter-interface-contract
+        mechanism: >
+          Block any write targeting swarm/core/policies/invariants.yaml
+          or adapters/*/enforcement.yaml during runtime.
+        action_on_violation: hard_block
+
+  pre_destructive:
+    description: Checks before destructive external actions
+    checks:
+      - id: human-gate
+        invariant_ref: human-approval-destructive
+        mechanism: >
+          Present approval prompt to user before: git push, PR create/merge,
+          issue create, deployment trigger, file deletion outside .sdd/.
+        action_on_violation: block_until_approved
+
+  circuit_breakers:
+    description: Runtime loop and retry limits
+    checks:
+      - id: feedback-loop-limit
+        invariant_ref: max-feedback-iterations
+        mechanism: >
+          Count feedback rounds per stage. If count > 2, halt stage and surface to human.
+        action_on_violation: halt_stage
+
+      - id: agent-retry-limit
+        invariant_ref: max-agent-retries
+        mechanism: >
+          Count consecutive failures per agent delegation. If count > 2, halt and surface.
+        action_on_violation: halt_stage
+
+  package_validation:
+    description: Checks when loading external packages
+    checks:
+      - id: no-core-override
+        invariant_ref: external_packages.override_core_agents
+        mechanism: >
+          Reject any package manifest that declares agent definitions
+          with names matching core agents (planner, researcher, coder, spec-writer, reviewer, memory-curator).
+        action_on_violation: reject_package
+
+      - id: trust-tier-enforcement
+        invariant_ref: external_packages.undeclared_capabilities
+        mechanism: >
+          Verify package only provides artifacts allowed by its declared trust_tier.
+          Tier 1: behaviors only. Tier 2: behaviors + modes. Tier 3: all.
+        action_on_violation: reject_package
+
+      - id: no-floating-versions
+        invariant_ref: external_packages.floating_versions
+        mechanism: >
+          Reject package manifests without explicit version pinning.
+        action_on_violation: reject_package
+
+violation_actions:
+  block_delegation: "Prevent the delegation from being dispatched. Log violation event. Notify planner."
+  reject_write: "Discard the write. Log violation event. Continue execution."
+  reject_write_and_alert: "Discard the write. Log violation event. Alert user immediately."
+  hard_block: "Halt entire execution. This is a system integrity violation."
+  block_until_approved: "Pause execution. Present human approval gate. Resume only on explicit approval."
+  halt_stage: "Stop current stage. Log circuit breaker event. Surface to human with context."
+  reject_package: "Refuse to load the package. Log rejection reason. Continue without it."
+
+audit_integration:
+  all_violations_logged: true
+  event_type: "invariant_violation"
+  fields: [invariant_id, check_id, enforcement_point, action_taken, context, timestamp]

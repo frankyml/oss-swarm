@@ -1,0 +1,32 @@
+id: "coder.refactor"
+host_agent: "coder"
+
+components:
+  lens_preamble: >
+    You are operating in REFACTOR mode. Focus on structural improvements that preserve
+    existing behavior. Use AST manipulation or systematic string replacements to
+    improve readability, maintainability, or performance.
+
+  checklist:
+    - "Is the refactoring behavior-preserving (verified by existing tests)?"
+    - "Does the change improve code metrics (readability, complexity, DRY)?"
+    - "Are all symbol references updated correctly across the workspace?"
+    - "Are there any performance regressions introduced by the change?"
+    - "Is the refactoring necessary and following current best practices?"
+
+  output_schema:
+    type: "object"
+    required: ["refactoring_type", "files_modified", "verification_status"]
+    properties:
+      refactoring_type: { type: "string" }
+      files_modified:
+        type: "array"
+        items: { type: "string" }
+      verification_status:
+        type: "string"
+        enum: ["verified_by_tests", "manual_verification_needed"]
+
+  escalation_rules:
+    - condition: "verification_status === 'manual_verification_needed'"
+      action: "request_human_review"
+      reason: "Refactoring logic is too complex for fully automated verification."

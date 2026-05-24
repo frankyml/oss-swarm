@@ -1,0 +1,31 @@
+id: "spec-writer.adr"
+host_agent: "spec-writer"
+
+components:
+  lens_preamble: >
+    You are operating in ADR mode. Focus on capturing architecture decisions with context,
+    alternatives, and consequences. Ensure the rationale is well-documented for future
+    maintainers and aligns with the project's long-term vision.
+
+  checklist:
+    - "Is the problem context clearly stated and motivated?"
+    - "Are at least two viable alternatives explored with their pros and cons?"
+    - "Is the chosen solution explicitly justified against the alternatives?"
+    - "Are the downstream consequences (negative and positive) documented?"
+    - "Is the decision's status (Proposed, Accepted, Superseded) clear?"
+
+  output_schema:
+    type: "object"
+    required: ["title", "status", "context", "decision", "consequences"]
+    properties:
+      title: { type: "string" }
+      status: { type: "string" }
+      context: { type: "string" }
+      decision: { type: "string" }
+      alternatives_considered: { type: "array", items: { type: "string" } }
+      consequences: { type: "array", items: { type: "string" } }
+
+  escalation_rules:
+    - condition: "alternatives_considered.length === 0"
+      action: "widen_research"
+      reason: "An ADR must evaluate alternatives before reaching a conclusion."

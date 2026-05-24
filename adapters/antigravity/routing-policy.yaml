@@ -1,0 +1,40 @@
+# Execution routing policies for Antigravity Adapter
+adapter: "antigravity"
+
+pipeline_execution_mapping:
+  # General rule for handling the 'parallel' flag in pipeline YAMLs
+  parallel_execution:
+    trigger_condition: "stage.parallel == true"
+    antigravity_action: "Merge all sub_stages into a single invoke_subagent call. Pass each agent definition as a distinct item in the Subagents array."
+  
+  sequential_execution:
+    trigger_condition: "stage.parallel == false"
+    antigravity_action: "Execute invoke_subagent for the single stage. Use send_message or wait for output before progressing to the next stage in the pipeline."
+
+pipeline_overrides:
+  # Pipeline specific execution routing
+  "pipeline.implement":
+    stages:
+      "research_dependencies":
+        method: "sequential"
+      "write_code":
+        method: "sequential"
+      "validation_layer":
+        method: "parallel"
+        subagent_mapping:
+          - "security_audit"
+          - "qa_verification"
+          - "architecture_review"
+      "memory_consolidation":
+        method: "sequential"
+
+  "pipeline.audit":
+    stages:
+      "discovery":
+        method: "sequential"
+      "deep_dive":
+        method: "parallel"
+        subagent_mapping:
+          - "security"
+          - "architecture"
+          - "performance"

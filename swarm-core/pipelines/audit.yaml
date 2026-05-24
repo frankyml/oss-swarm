@@ -1,0 +1,55 @@
+id: "pipeline.audit"
+description: "Comprehensive technical audit of security, architecture, and quality"
+
+stages:
+  - id: "discovery"
+    agent: "researcher"
+    modes: ["survey"]
+    parallel: false
+    mandatory: true
+    contract:
+      must_provide: ["codebase_inventory.json", "high_level_architecture.md"]
+      must_not_provide: ["vulnerability_reports"]
+
+  - id: "audit_layer"
+    parallel: true
+    mandatory: true
+    sub_stages:
+      - id: "security_audit"
+        agent: "reviewer"
+        modes: ["security"]
+        contract:
+          must_provide: ["threat_model.md", "vulnerability_list.json"]
+          must_not_provide: []
+
+      - id: "architecture_audit"
+        agent: "reviewer"
+        modes: ["architecture"]
+        contract:
+          must_provide: ["architecture_gap_analysis.md"]
+          must_not_provide: []
+
+      - id: "qa_audit"
+        agent: "reviewer"
+        modes: ["qa"]
+        contract:
+          must_provide: ["test_coverage_audit.json", "edge_case_inventory.md"]
+          must_not_provide: []
+
+  - id: "remediation_planning"
+    agent: "spec-writer"
+    modes: ["runbook"]
+    parallel: false
+    mandatory: true
+    contract:
+      must_provide: ["remediation_roadmap.md", "backlog_items.json"]
+      must_not_provide: ["code_fixes"]
+
+  - id: "memory_consolidation"
+    agent: "memory-curator"
+    modes: ["append"]
+    parallel: false
+    mandatory: true
+    contract:
+      must_provide: ["memory_patch"]
+      must_not_provide: ["workspace_artifacts"]

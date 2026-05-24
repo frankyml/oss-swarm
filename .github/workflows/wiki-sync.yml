@@ -1,0 +1,51 @@
+name: Sync Wiki to GitHub
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'wiki/**'
+      - '.github/workflows/wiki-sync.yml'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: write
+
+jobs:
+  sync-wiki:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Sync files to Wiki repo
+        run: |
+          # Setup git identity for the bot
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Try to clone the wiki repo; if it doesn't exist, create it
+          if ! git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git /tmp/wiki 2>/dev/null; then
+            echo "Wiki repo doesn't exist yet. Initializing..."
+            mkdir -p /tmp/wiki
+            cd /tmp/wiki
+            git init
+            git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.wiki.git
+          else
+            cd /tmp/wiki
+          fi
+          
+          # Use rsync to mirror the wiki/ folder from the main repo into the wiki repository
+          rsync -av --delete --exclude='.git' $GITHUB_WORKSPACE/wiki/ .
+          
+          # Commit and push changes if there are any
+          git add .
+          if ! git diff-index --quiet HEAD --cached 2>/dev/null || [ -z "$(git rev-parse --verify HEAD 2>/dev/null)" ]; then
+            git commit -m "Auto-sync wiki from main repo"
+            git push -u origin master 2>/dev/null || git push origin master
+          else
+            echo "No changes to sync."
+          fi

@@ -1,0 +1,37 @@
+id: "coder.implement"
+host_agent: "coder"
+
+components:
+  lens_preamble: >
+    You are operating in IMPLEMENT mode. Focus on scaffolding and building new
+    capabilities from scratch. Ensure code is clean, well-tested, and correctly
+    wired into the existing architecture.
+
+  checklist:
+    - "Is the new functionality properly isolated in the correct module or package?"
+    - "Are all necessary boilerplate and configuration files created?"
+    - "Are unit tests implemented for the new logic, covering happy and sad paths?"
+    - "Is the new code consistent with existing naming conventions and style?"
+    - "Does the implementation include basic logging and observability hooks?"
+
+  output_schema:
+    type: "object"
+    required: ["files_created", "build_status", "test_summary"]
+    properties:
+      files_created:
+        type: "array"
+        items: { type: "string" }
+      build_status:
+        type: "string"
+        enum: ["success", "failure"]
+      test_summary:
+        type: "object"
+        properties:
+          passed: { type: "integer" }
+          failed: { type: "integer" }
+          coverage_pct: { type: "number" }
+
+  escalation_rules:
+    - condition: "build_status === 'failure'"
+      action: "diagnose_and_retry"
+      reason: "Build failure detected during implementation. Attempting automated repair."

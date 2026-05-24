@@ -1,0 +1,34 @@
+id: "memory-curator.retrospective"
+host_agent: "memory-curator"
+
+components:
+  lens_preamble: >
+    You are operating in RETROSPECTIVE mode. Focus on systemic failure patterns or
+    recurring friction. Analyze historical execution logs to identify root causes 
+    and propose structural improvements to the swarm's logic.
+
+  checklist:
+    - "Are there recurring errors or bottlenecks across multiple swarm runs?"
+    - "Does the friction suggest a gap in a specific agent's memory or skill set?"
+    - "Is the root cause identified as systemic (process/logic) or transient (network/AI)?"
+    - "Does the proposed fix involve updating a pipeline, mode, or invariant?"
+    - "Is the retrospective based on a sufficient sample of execution history?"
+
+  output_schema:
+    type: "object"
+    required: ["findings", "root_cause_analysis", "proposed_logic_changes"]
+    properties:
+      findings: { type: "array", items: { type: "string" } }
+      root_cause_analysis: { type: "string" }
+      proposed_logic_changes:
+        type: "array"
+        items:
+          type: "object"
+          properties:
+            target: { type: "string", description: "Path to pipeline, mode, or policy" }
+            description: { type: "string" }
+
+  escalation_rules:
+    - condition: "proposed_logic_changes.length > 0"
+      action: "request_human_approval"
+      reason: "Retrospective identified necessary policy mutations requiring human sign-off."

@@ -1,0 +1,115 @@
+id: audit
+version: 0.1.0
+description: >
+  Defines the structure, lifecycle, and storage of swarm execution audit bundles.
+  Every swarm run produces an immutable bundle enabling replay, debugging, and drift detection.
+
+run_bundle:
+  root: swarm/runs/{run-id}/
+  structure:
+    manifest.json:
+      description: Frozen snapshot of all versions and inputs at execution start
+      contents:
+        - run_id
+        - timestamp_start
+        - timestamp_end
+        - outcome: [success, failure, partial, halted]
+        - pipeline_id
+        - pipeline_version_hash
+        - task_profile
+        - agent_versions: map of agent_name → file hash
+        - mode_versions: map of mode_name → file hash
+        - policy_versions: map of policy_name → file hash
+        - adapter_version_hash
+        - memory_snapshot_hash
+        - packages_loaded: list of {name, version, trust_tier}
+        - runtime_capabilities: list from adapter
+
+    events.jsonl:
+      description: Ordered event log — one JSON object per line
+      event_types:
+        - stage_start: {stage_id, agent, modes, timestamp}
+        - stage_end: {stage_id, outcome, duration_ms, timestamp}
+        - delegation: {agent, category_or_subagent, tier, prompt_hash, timestamp}
+        - delegation_result: {agent, outcome, duration_ms, timestamp}
+        - mode_resolved: {task_profile_hash, lenses_applied, timestamp}
+        - memory_write: {target_file, patch_hash, timestamp}
+        - policy_mutation: {policy_file, patch_hash, approval_status, timestamp}
+        - circuit_breaker: {type, trigger_reason, timestamp}
+        - human_gate: {action, approved, timestamp}
+        - error: {agent, stage_id, message, timestamp}
+
+    inputs/:
+      description: Immutable copies of all inputs consumed by the run
+      contents:
+        - Original user request (verbatim)
+        - Referenced files at execution start (hashes, not full copies)
+        - External data fetched (URLs, responses)
+
+    outputs/:
+      description: All artifacts produced by agents during the run
+      contents:
+        - Agent deliverables (code, specs, reports)
+        - Handoff summaries between stages
+        - Final delivery to user
+
+    memory-snapshot.json:
+      description: Complete memory state at run start (for replay baseline)
+      contents:
+        - core memory file hashes
+        - agent memory file hashes
+        - project memory file hashes
+
+    change-proposals/:
+      description: Diffs proposed during the run (memory updates, policy mutations)
+      format: "{sequence}-{target}.patch"
+
+patch_storage:
+  root: swarm/changes/
+  naming: "{ISO-timestamp}-{change-id}.patch"
+  types:
+    - memory_update: agent memory evolution
+    - policy_mutation: guarded self-improvement changes
+    - mode_addition: new mode from package or self-improvement
+  reversibility: >
+    Any change can be reverted by applying the inverse patch.
+    Memory state can be fully restored from any prior memory-snapshot.json.
+
+lifecycle:
+  on_swarm_start:
+    - Generate run_id (UUID v4)
+    - Create run bundle directory
+    - Snapshot memory state → memory-snapshot.json
+    - Write initial manifest.json (versions, inputs, task profile)
+    - Begin events.jsonl
+
+  on_stage_transition:
+    - Append stage_start/stage_end events
+    - Record delegation events with prompt hashes (not full prompts)
+
+  on_memory_write:
+    - Generate .patch file in change-proposals/
+    - Append memory_write event
+
+  on_swarm_end:
+    - Finalize manifest.json (outcome, timestamps, duration)
+    - Close events.jsonl
+    - Bundle is immutable after this point
+
+  retention:
+    max_runs: 50
+    prune_strategy: oldest_first
+    preserve_failures: true
+
+replay:
+  description: >
+    A run bundle contains enough information to understand what happened and why.
+    Full deterministic replay requires the same model responses (not guaranteed),
+    but the bundle enables: debugging failures, auditing decisions, detecting drift,
+    and validating that policy changes don't break existing workflows.
+
+  use_cases:
+    - "Why did the swarm make this decision?" → Read events.jsonl + manifest policy versions
+    - "What changed after this run?" → Diff change-proposals/ patches
+    - "Is the system drifting?" → Compare manifest versions across recent runs
+    - "Revert a bad change" → Apply inverse of the relevant .patch file

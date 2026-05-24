@@ -1,0 +1,24 @@
+adapter: "antigravity"
+
+toolmap:
+  # Abstract Swarm Tool -> Antigravity Native Tool
+  terminal: "run_command"
+  file_read: "view_file"
+  file_write: 
+    - "write_to_file"
+    - "replace_file_content"
+    - "multi_replace_file_content"
+  code_search: "grep_search"
+  web_search: "search_web"
+  directory_list: "list_dir"
+
+model_tiering_policy:
+  # Complex reasoning tasks leverage Gemini Pro models
+  planner: "gemini-pro"
+  researcher: "gemini-pro"
+  reviewer: "gemini-pro"
+  
+  # Formatting/Execution tasks leverage Gemini Flash models for speed and cost efficiency
+  coder: "gemini-flash"
+  spec-writer: "gemini-flash"
+  memory-curator: "gemini-flash"

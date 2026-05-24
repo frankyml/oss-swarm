@@ -1,0 +1,38 @@
+id: "researcher.survey"
+host_agent: "researcher"
+
+components:
+  lens_preamble: >
+    You are operating in SURVEY mode. Map the breadth of the landscape for an unfamiliar
+    domain. Identify key players, established patterns, core technologies, and common 
+    challenges without going too deep into any single one.
+
+  checklist:
+    - "What are the industry-standard solutions or frameworks in this domain?"
+    - "What are the common architectural patterns used for this problem type?"
+    - "What are the known limitations or 'gotchas' associated with these approaches?"
+    - "Are there any emerging technologies or trends that should be considered?"
+    - "What are the authoritative sources of truth (docs, specs, repos) for this area?"
+
+  output_schema:
+    type: "object"
+    required: ["landscape_map", "key_findings", "recommended_deep_dives"]
+    properties:
+      landscape_map:
+        type: "array"
+        items:
+          type: "object"
+          properties:
+            category: { type: "string" }
+            options: { type: "array", items: { type: "string" } }
+      key_findings:
+        type: "array"
+        items: { type: "string" }
+      recommended_deep_dives:
+        type: "array"
+        items: { type: "string" }
+
+  escalation_rules:
+    - condition: "landscape_map.length === 0"
+      action: "request_human_guidance"
+      reason: "No clear landscape identified. Domain may be too niche or search terms incorrect."

@@ -1,0 +1,95 @@
+runtime: opencode
+
+agents:
+  planner:
+    route: orchestrator
+    delegated: false
+    note: Planner execution stays in the orchestrator and never becomes a runtime subagent call.
+
+  researcher:
+    route: subagent
+    subagent_type: "librarian"
+    tier_override: null
+    prompt_source: "adapters/opencode/prompt-assembler.md"
+
+  coder:
+    route: category
+    tier_selection: dynamic
+    default_tier: "unspecified-high"
+    prompt_source: "adapters/opencode/prompt-assembler.md"
+
+  spec-writer:
+    route: category
+    tier_selection: dynamic
+    default_tier: "writing"
+    prompt_source: "adapters/opencode/prompt-assembler.md"
+
+  reviewer:
+    route: subagent
+    subagent_type: "oracle"
+    tier_override: null
+    prompt_source: "adapters/opencode/prompt-assembler.md"
+
+  memory-curator:
+    route: category
+    tier_selection: fixed
+    default_tier: "quick"
+    prompt_source: "adapters/opencode/prompt-assembler.md"
+
+tier_resolution:
+  policy: dynamic_for_category_routes_only
+  baseline_rules:
+    quick:
+      use_when:
+        - single_file
+        - known_pattern
+        - low_blast_radius
+    unspecified-high:
+      use_when:
+        - multi_file
+        - follows_existing_patterns
+        - under_200_loc_equivalent_change_scope
+    deep:
+      use_when:
+        - cross_module
+        - new_pattern
+        - structural_change
+    ultrabrain:
+      use_when:
+        - security_critical
+        - high_uncertainty
+        - unfamiliar_or_high_risk_domain
+    writing:
+      use_when:
+        - documentation_or_spec_primary_artifact
+
+tier_escalation:
+  signals:
+    - condition: "files_touched > 5"
+      escalate_to: "deep"
+      rationale: "Large edit surfaces require stronger reasoning depth."
+    - condition: "new_pattern == true"
+      escalate_to: "deep"
+      rationale: "Novel structure requires a non-default implementation tier."
+    - condition: "security_critical == true"
+      escalate_to: "ultrabrain"
+      rationale: "Security-critical work always overrides lower category tiers."
+
+prompt_assembly:
+  assembler_spec: "adapters/opencode/prompt-assembler.md"
+  required_sections:
+    - IDENTITY
+    - LENS
+    - CHECKLIST
+    - TASK
+    - CONTRACT
+    - CONTEXT
+  section_order_is_strict: true
+
+task_call_mapping:
+  route_to_parameter:
+    subagent: subagent_type
+    category: category
+  toolmap_source: "adapters/opencode/toolmap.yaml"
+  capabilities_source: "adapters/opencode/capabilities.yaml"
+  parallel_execution_supported: true

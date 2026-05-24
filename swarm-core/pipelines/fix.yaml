@@ -1,0 +1,39 @@
+id: "pipeline.fix"
+description: "Targeted bug fixing and regression verification pipeline"
+
+stages:
+  - id: "root_cause_analysis"
+    agent: "researcher"
+    modes: ["verify"]
+    parallel: false
+    mandatory: true
+    contract:
+      must_provide: ["reproduction_script", "failure_analysis.md"]
+      must_not_provide: ["code_patch"]
+
+  - id: "implementation"
+    agent: "coder"
+    modes: ["patch"]
+    parallel: false
+    mandatory: true
+    contract:
+      must_provide: ["fix_diff", "regression_tests", "verification_log"]
+      must_not_provide: ["unrelated_refactors"]
+
+  - id: "qa_validation"
+    agent: "reviewer"
+    modes: ["qa"]
+    parallel: false
+    mandatory: true
+    contract:
+      must_provide: ["qa_verdict.json"]
+      must_not_provide: ["fix_modifications"]
+
+  - id: "memory_consolidation"
+    agent: "memory-curator"
+    modes: ["append"]
+    parallel: false
+    mandatory: true
+    contract:
+      must_provide: ["memory_patch"]
+      must_not_provide: ["workspace_artifacts"]

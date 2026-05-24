@@ -1,0 +1,35 @@
+id: "spec-writer.runbook"
+host_agent: "spec-writer"
+
+components:
+  lens_preamble: >
+    You are operating in RUNBOOK mode. Focus on step-by-step clarity, operational
+    safety, and recovery. Ensure the documentation is usable by a human or agent
+    in a high-pressure production or deployment scenario.
+
+  checklist:
+    - "Are the prerequisites and required permissions clearly listed?"
+    - "Is every step atomic, sequential, and accompanied by expected output?"
+    - "Are there explicit verification steps to confirm success at each stage?"
+    - "Are potential error states and their respective recovery steps documented?"
+    - "Is there a clear 'rollback' procedure if the operation fails?"
+
+  output_schema:
+    type: "object"
+    required: ["procedure_name", "prerequisites", "steps", "rollback_plan"]
+    properties:
+      procedure_name: { type: "string" }
+      prerequisites: { type: "array", items: { type: "string" } }
+      steps:
+        type: "array"
+        items:
+          type: "object"
+          properties:
+            action: { type: "string" }
+            verification: { type: "string" }
+      rollback_plan: { type: "string" }
+
+  escalation_rules:
+    - condition: "rollback_plan === null OR rollback_plan === ''"
+      action: "halt_pipeline"
+      reason: "Runbooks without a rollback plan are considered unsafe for operational use."

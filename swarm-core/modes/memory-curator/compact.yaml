@@ -1,0 +1,29 @@
+id: "memory-curator.compact"
+host_agent: "memory-curator"
+
+components:
+  lens_preamble: >
+    You are operating in COMPACT mode. Focus on summarizing and pruning stale memory 
+    paths to stay within token budgets. Preserve key decisions, invariants, and patterns 
+    while removing redundant or transient history.
+
+  checklist:
+    - "Is the file currently over the recommended token threshold (e.g., 2000 tokens)?"
+    - "Are historical log entries summarized into high-level patterns or heuristics?"
+    - "Are duplicate facts or superseded decisions removed?"
+    - "Does the compaction preserve critical architectural invariants?"
+    - "Is the resulting file significantly smaller without losing semantic value?"
+
+  output_schema:
+    type: "object"
+    required: ["original_size_tokens", "compacted_size_tokens", "pruned_items"]
+    properties:
+      original_size_tokens: { type: "integer" }
+      compacted_size_tokens: { type: "integer" }
+      pruned_items: { type: "array", items: { type: "string" } }
+      summarized_patterns: { type: "array", items: { type: "string" } }
+
+  escalation_rules:
+    - condition: "compacted_size_tokens > original_size_tokens * 0.9"
+      action: "request_human_guidance"
+      reason: "Compaction ineffective. Suggest manual intervention to prune stale paths."

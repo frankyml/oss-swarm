@@ -1,0 +1,16 @@
+name: aicontext
+version: 0.1.0
+description: >
+  Teaches swarm agents how to discover and use .aicontext/ project context files.
+  First-party package demonstrating the external package model.
+
+trust_tier: 1  # behaviors only
+
+provides:
+  behaviors:
+    - aicontext-aware
+
+memory_scope: packages/aicontext
+
+compatibility:
+  swarm_core: ">=0.1.0"

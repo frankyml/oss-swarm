@@ -1,0 +1,39 @@
+id: "pipeline.research-report"
+description: "Information gathering and verification pipeline producing structured findings"
+
+stages:
+  - id: "initial_survey"
+    agent: "researcher"
+    modes: ["survey"]
+    parallel: false
+    mandatory: true
+    contract:
+      must_provide: ["research_notes.md", "source_inventory.json"]
+      must_not_provide: ["final_report"]
+
+  - id: "verification"
+    agent: "researcher"
+    modes: ["verify"]
+    parallel: false
+    mandatory: true
+    contract:
+      must_provide: ["verified_findings.json", "citation_map.md"]
+      must_not_provide: []
+
+  - id: "report_generation"
+    agent: "spec-writer"
+    modes: ["runbook"]
+    parallel: false
+    mandatory: true
+    contract:
+      must_provide: ["findings_report.md"]
+      must_not_provide: ["technical_implementation"]
+
+  - id: "memory_consolidation"
+    agent: "memory-curator"
+    modes: ["append"]
+    parallel: false
+    mandatory: true
+    contract:
+      must_provide: ["memory_patch"]
+      must_not_provide: ["workspace_artifacts"]

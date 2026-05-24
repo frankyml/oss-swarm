@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TaskProfile",
+  "type": "object",
+  "required": [
+    "mutating",
+    "riskScore",
+    "reviewDepth",
+    "artifactType",
+    "publicSurface",
+    "userFacing",
+    "authOrSecrets",
+    "externalIntegration",
+    "assuranceLenses"
+  ],
+  "properties": {
+    "mutating": {
+      "type": "boolean",
+      "description": "True if the task will alter the workspace or external systems."
+    },
+    "riskScore": {
+      "type": "integer",
+      "enum": [0, 1, 2, 3],
+      "description": "0=Trivial, 1=Standard, 2=High (Complex/Integration), 3=Critical (Prod/Security)."
+    },
+    "reviewDepth": {
+      "type": "integer",
+      "enum": [0, 1, 2],
+      "description": "0=None, 1=Syntax/Style, 2=Deep Architecture/Logic."
+    },
+    "artifactType": {
+      "type": "string",
+      "enum": ["code", "spec", "plan", "docs", "workflow"],
+      "description": "Primary material classification."
+    },
+    "publicSurface": {
+      "type": "boolean",
+      "description": "True if exposing new endpoints, CLI commands, or APIs."
+    },
+    "userFacing": {
+      "type": "boolean",
+      "description": "True if end-users directly interact with the artifact output."
+    },
+    "authOrSecrets": {
+      "type": "boolean",
+      "description": "True if touching IAM, credentials, tokens, or permissions."
+    },
+    "externalIntegration": {
+      "type": "boolean",
+      "description": "True if invoking third-party services, APIs, or DBs."
+    },
+    "assuranceLenses": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Populated by the ModeResolver. Array of ModeIds."
+    }
+  }
+}

@@ -1,0 +1,43 @@
+id: "reviewer.friction"
+host_agent: "reviewer"
+
+components:
+  lens_preamble: >
+    You are operating in FRICTION mode. Focus on the user and agent experience. Identify
+    bottlenecks, cognitive load, unnecessary approval gates, or confusing CLI/UX flows
+    that slow down the development loop.
+
+  checklist:
+    - "Does the flow minimize the number of unnecessary human touchpoints?"
+    - "Are error messages and status updates clear, actionable, and concise?"
+    - "Is the cognitive load for the user reasonable during 'Guided' mode?"
+    - "Are there redundant steps in the pipeline that can be automated or fused?"
+    - "Is the handoff between agents efficient (minimal token waste)?"
+
+  output_schema:
+    type: "object"
+    required: ["verdict", "friction_points", "ux_violations", "optimization_ideas"]
+    properties:
+      verdict:
+        type: "string"
+        enum: ["pass", "fail"]
+      friction_points:
+        type: "array"
+        items:
+          type: "object"
+          properties:
+            step: { type: "string" }
+            description: { type: "string" }
+            impact: { type: "string", enum: ["high", "medium", "low"] }
+      ux_violations:
+        type: "array"
+        items: { type: "string" }
+      optimization_ideas:
+        type: "array"
+        items: { type: "string" }
+
+  escalation_rules:
+    - condition: "friction_points.some(p => p.impact === 'high')"
+      action: "widen_review"
+      target_mode: "reviewer.product"
+      reason: "High friction points suggest a fundamental misalignment with product UX goals."

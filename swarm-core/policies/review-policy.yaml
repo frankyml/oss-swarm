@@ -1,0 +1,96 @@
+review_policy:
+  description: >
+    Review requirements derived from risk score. This policy replaces the v1
+    sentinelMode and reviewerMode model with explicit reviewer mode requirements.
+
+  review_requirements:
+    riskScore_0:
+      reviewer: none
+      reviewer_modes: []
+      parallel_validation: false
+      pre_flight: false
+      blocking: false
+      intent: "Read-only or trivial work does not require independent reviewer execution."
+
+    riskScore_1:
+      reviewer: "reviewer.qa"
+      reviewer_modes:
+        - "reviewer.qa"
+      parallel_validation: false
+      pre_flight: false
+      blocking: true
+      intent: "Routine mutating work requires a single QA-oriented validation pass."
+
+    riskScore_2:
+      reviewer:
+        - "reviewer.security"
+        - "reviewer.architecture"
+      reviewer_modes:
+        - "reviewer.security"
+        - "reviewer.architecture"
+      parallel_validation: true
+      pre_flight: false
+      blocking: true
+      intent: "Elevated-risk work requires concurrent security and architecture validation after implementation."
+
+    riskScore_3:
+      reviewer:
+        - "reviewer.security"
+        - "reviewer.architecture"
+        - "reviewer.qa"
+      reviewer_modes:
+        - "reviewer.security"
+        - "reviewer.architecture"
+        - "reviewer.qa"
+      parallel_validation: true
+      pre_flight: true
+      blocking: true
+      intent: "Critical-risk work requires pre-flight scrutiny plus full post-change reviewer coverage."
+
+  execution_order:
+    default_mutating_flow:
+      - implementation_stage
+      - reviewer_stage_or_parallel_reviewer_stages
+      - downstream_delivery_gate_if_present
+    pre_flight_for_riskScore_3:
+      - planner_prepares_task_profile
+      - pre_flight_security_or_architecture_check
+      - implementation_stage
+      - full_post_change_review
+
+  reviewer_skip_guard:
+    allowed_only_when_all_true:
+      - "review requirement resolves to reviewer: none"
+      - "no runtime code changed"
+      - "no new public interfaces introduced"
+    invalid_rationalizations:
+      - "It is only process or orchestration content even though it affects runtime behavior"
+      - "Self-review is enough for a mutating runtime change"
+      - "The change is small so independent review is unnecessary"
+    enforcement: "If any guard condition fails, at least one reviewer mode must be executed."
+
+  ownership_boundaries:
+    coder:
+      owns:
+        - correctness_self_check
+        - style
+        - local_test_execution
+      does_not_own:
+        - independent_security_analysis
+        - independent_architecture_review
+    reviewer:
+      owns:
+        - solution_quality
+        - scope_validation
+        - architecture_validation
+        - security_validation
+        - qa_validation
+      does_not_own:
+        - code_mutation
+        - direct_bug_fixing
+        - test_execution_as_primary_evidence
+
+  resolution_notes:
+    - "riskScore_0 can still receive reviewer modes from the mode resolver for non-blocking advisory workflows, but no independent reviewer is mandatory by this policy."
+    - "riskScore_2 and riskScore_3 reviews are blocking and must pass before delivery."
+    - "parallel_validation means the listed reviewer modes may run concurrently once implementation artifacts are available."

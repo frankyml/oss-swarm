@@ -1,0 +1,9 @@
+# Memory files are personal and session-specific — never commit actual content
+memory/core/*.md
+memory/agents/*.md
+memory/projects/**/*.md
+
+# Keep directory structure
+!memory/core/.gitkeep
+!memory/agents/.gitkeep
+!memory/projects/.gitkeep

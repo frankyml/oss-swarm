@@ -1,0 +1,33 @@
+id: "coder.migrate"
+host_agent: "coder"
+
+components:
+  lens_preamble: >
+    You are operating in MIGRATE mode. Focus on framework, API, or configuration version
+    updates. Handle deprecations systematically and ensure compatibility with the
+    new version's requirements.
+
+  checklist:
+    - "Are all relevant dependencies updated in the manifest/lockfile?"
+    - "Are deprecated API calls replaced with their modern equivalents?"
+    - "Does the migration include necessary configuration schema updates?"
+    - "Are version-specific 'gotchas' or migration steps followed?"
+    - "Do existing tests pass under the new environment/version?"
+
+  output_schema:
+    type: "object"
+    required: ["version_from", "version_to", "migration_steps_applied", "status"]
+    properties:
+      version_from: { type: "string" }
+      version_to: { type: "string" }
+      migration_steps_applied:
+        type: "array"
+        items: { type: "string" }
+      status:
+        type: "string"
+        enum: ["complete", "partial", "blocked"]
+
+  escalation_rules:
+    - condition: "status === 'blocked'"
+      action: "request_human_guidance"
+      reason: "Migration blocked by incompatible dependencies or breaking changes requiring manual resolution."

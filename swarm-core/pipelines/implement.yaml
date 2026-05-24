@@ -1,0 +1,56 @@
+# swarm/core/pipelines/implement.yaml
+id: "pipeline.implement"
+description: "Standard code implementation pipeline with deep validation"
+
+stages:
+  - id: "research_dependencies"
+    agent: "researcher"
+    modes: ["verify"]
+    parallel: false
+    mandatory: false
+    contract:
+      must_provide: ["dependency_validation_report.md"]
+      must_not_provide: ["code_mutations"]
+
+  - id: "write_code"
+    agent: "coder"
+    modes: ["implement"]
+    parallel: false
+    mandatory: true
+    contract:
+      must_provide: ["source_code", "unit_tests", "build_success_log"]
+      must_not_provide: ["untested_stubs"]
+
+  - id: "validation_layer"
+    parallel: true
+    mandatory: true
+    sub_stages:
+      - id: "security_audit"
+        agent: "reviewer"
+        modes: ["security"]
+        contract:
+          must_provide: ["security_verdict.json"]
+          must_not_provide: ["code_fixes"]
+
+      - id: "qa_verification"
+        agent: "reviewer"
+        modes: ["qa"]
+        contract:
+          must_provide: ["qa_verdict.json", "coverage_report"]
+          must_not_provide: ["code_fixes"]
+
+      - id: "architecture_review"
+        agent: "reviewer"
+        modes: ["architecture"]
+        contract:
+          must_provide: ["architecture_verdict.json"]
+          must_not_provide: []
+
+  - id: "memory_consolidation"
+    agent: "memory-curator"
+    modes: ["append"]
+    parallel: false
+    mandatory: true
+    contract:
+      must_provide: ["memory_patch"]
+      must_not_provide: ["workspace_artifacts"]

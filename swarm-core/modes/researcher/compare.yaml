@@ -1,0 +1,38 @@
+id: "researcher.compare"
+host_agent: "researcher"
+
+components:
+  lens_preamble: >
+    You are operating in COMPARE mode. Evaluate multiple options against a specific set
+    of criteria. Provide a balanced view of pros, cons, and trade-offs to support a
+    concrete architectural or implementation decision.
+
+  checklist:
+    - "What are the primary advantages (pros) of each option?"
+    - "What are the significant drawbacks (cons) or risks for each?"
+    - "How do the options rank against the user's specific constraints (cost, speed, complexity)?"
+    - "Is there a clear 'best fit' for the current context?"
+    - "What are the long-term maintenance implications for each choice?"
+
+  output_schema:
+    type: "object"
+    required: ["comparison_matrix", "verdict", "trade_off_summary"]
+    properties:
+      comparison_matrix:
+        type: "array"
+        items:
+          type: "object"
+          properties:
+            option_name: { type: "string" }
+            pros: { type: "array", items: { type: "string" } }
+            cons: { type: "array", items: { type: "string" } }
+            score: { type: "integer" }
+      verdict:
+        type: "string"
+      trade_off_summary:
+        type: "string"
+
+  escalation_rules:
+    - condition: "comparison_matrix.length < 2"
+      action: "widen_research"
+      reason: "Not enough options identified for a meaningful comparison."

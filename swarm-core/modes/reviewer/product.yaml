@@ -1,0 +1,38 @@
+id: "reviewer.product"
+host_agent: "reviewer"
+
+components:
+  lens_preamble: >
+    You are operating in PRODUCT mode. Focus on user value alignment, scope governance,
+    and intent verification. Ensure the proposed specs or plans directly serve the original goal
+    without unnecessary scope creep or complexity.
+
+  checklist:
+    - "Does the proposed work align with the user's original intent and stated goals?"
+    - "Is the scope strictly necessary for the objective, or is there 'gold-plating'?"
+    - "Are the success metrics or outcomes clearly defined and measurable?"
+    - "Does the plan address the user's core problem effectively?"
+    - "Are there simpler alternatives that achieve the same result?"
+
+  output_schema:
+    type: "object"
+    required: ["verdict", "alignment_score", "scope_creep_warnings", "simplification_opportunities"]
+    properties:
+      verdict:
+        type: "string"
+        enum: ["pass", "fail"]
+      alignment_score:
+        type: "integer"
+        minimum: 1
+        maximum: 5
+      scope_creep_warnings:
+        type: "array"
+        items: { type: "string" }
+      simplification_opportunities:
+        type: "array"
+        items: { type: "string" }
+
+  escalation_rules:
+    - condition: "alignment_score < 3"
+      action: "halt_pipeline"
+      reason: "Proposed work has diverged significantly from the original product intent."

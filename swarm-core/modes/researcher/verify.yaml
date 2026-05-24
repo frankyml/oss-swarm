@@ -1,0 +1,40 @@
+id: "researcher.verify"
+host_agent: "researcher"
+
+components:
+  lens_preamble: >
+    You are operating in VERIFY mode. Fact-check a specific external claim or assumption
+    before a decision is made. Trace the claim back to authoritative sources and 
+    confirm its validity in the current context.
+
+  checklist:
+    - "Can the claim be traced to an official documentation source or primary spec?"
+    - "Is the information current or has it been superseded by a newer version?"
+    - "Does the claim hold true for the specific environment/platform being used?"
+    - "Are there contradictory sources that suggest a different conclusion?"
+    - "What is the confidence level in the verification (High/Medium/Low)?"
+
+  output_schema:
+    type: "object"
+    required: ["claim", "status", "evidence", "confidence_score"]
+    properties:
+      claim: { type: "string" }
+      status:
+        type: "string"
+        enum: ["verified", "refuted", "inconclusive"]
+      evidence:
+        type: "array"
+        items:
+          type: "object"
+          properties:
+            source_url: { type: "string" }
+            excerpt: { type: "string" }
+      confidence_score:
+        type: "integer"
+        minimum: 1
+        maximum: 5
+
+  escalation_rules:
+    - condition: "status === 'refuted' AND confidence_score >= 4"
+      action: "halt_pipeline"
+      reason: "Critical assumption refuted by authoritative evidence."

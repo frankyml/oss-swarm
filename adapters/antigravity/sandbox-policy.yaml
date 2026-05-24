@@ -1,0 +1,45 @@
+# Sandbox and Jail policies for external packages in Antigravity
+adapter: "antigravity"
+
+sandbox_tiers:
+  # Tier 1 packages are trusted, core behaviors
+  tier_1:
+    description: "Trusted Core Extensions"
+    tool_allowlist: ["*"]
+    path_restrictions: []
+
+  # Tier 2/Tier 3 are external packages that require strict jailing
+  tier_2_and_3:
+    description: "Untrusted External Packages"
+    
+    restricted_tools:
+      # Terminal access is strictly blocked for untrusted packages
+      - name: "run_command"
+        action: "block"
+        escalation: "planner_approval_required"
+    
+    file_operations:
+      # File modifications are restricted to the specific package memory namespace
+      allowed_paths:
+        - "memory/packages/{package_name}/*"
+      
+      restricted_operations:
+        - tool: "write_to_file"
+          condition: "target_path NOT IN allowed_paths"
+          action: "block"
+          escalation: "planner_approval_required"
+        
+        - tool: "replace_file_content"
+          condition: "target_path NOT IN allowed_paths"
+          action: "block"
+          escalation: "planner_approval_required"
+          
+        - tool: "multi_replace_file_content"
+          condition: "target_path NOT IN allowed_paths"
+          action: "block"
+          escalation: "planner_approval_required"
+
+default_escalation_policy:
+  # When a sandboxed agent attempts an out-of-bounds action
+  trigger: "action == 'block' AND escalation == 'planner_approval_required'"
+  action: "Send message to Planner detailing the requested operation, the tool, and the target. Wait for explicit Planner approval before executing."

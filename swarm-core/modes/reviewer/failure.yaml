@@ -1,0 +1,42 @@
+id: "reviewer.failure"
+host_agent: "reviewer"
+
+components:
+  lens_preamble: >
+    You are operating in FAILURE mode. Focus on operational risk, degradation paths,
+    and error recovery. Imagine everything that can go wrong—timeouts, rate limits, 
+    crashes—and verify the system survives or fails gracefully.
+
+  checklist:
+    - "Are there clear retry limits and backoff strategies for external tool calls?"
+    - "Does the system provide meaningful feedback when a background agent fails?"
+    - "Are circuit breakers in place for long-running or resource-intensive tasks?"
+    - "Is there a safe 'abort' path for all atomic operations?"
+    - "Can the system recover or resume from a partial failure state?"
+
+  output_schema:
+    type: "object"
+    required: ["verdict", "vulnerability_to_failure", "recovery_gaps", "reliability_recommendations"]
+    properties:
+      verdict:
+        type: "string"
+        enum: ["pass", "fail"]
+      vulnerability_to_failure:
+        type: "array"
+        items:
+          type: "object"
+          properties:
+            scenario: { type: "string" }
+            impact: { type: "string" }
+            severity: { type: "string", enum: ["high", "medium", "low"] }
+      recovery_gaps:
+        type: "array"
+        items: { type: "string" }
+      reliability_recommendations:
+        type: "array"
+        items: { type: "string" }
+
+  escalation_rules:
+    - condition: "vulnerability_to_failure.some(v => v.severity === 'high')"
+      action: "halt_pipeline"
+      reason: "High risk of ungraceful failure or system instability detected."

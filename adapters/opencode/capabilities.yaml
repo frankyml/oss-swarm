@@ -1,0 +1,36 @@
+runtime: opencode
+supportsParallelExecution: true
+maxContextTokens: 200000
+approvalMechanisms: ["question_tool", "human_in_loop"]
+availableTools:
+  - bash
+  - read
+  - write
+  - edit
+  - grep
+  - glob
+  - task
+  - background_output
+  - background_cancel
+  - lsp_diagnostics
+  - lsp_find_references
+  - lsp_goto_definition
+  - lsp_symbols
+  - lsp_rename
+  - lsp_prepare_rename
+  - todowrite
+  - look_at
+  - webfetch
+  - github_list_notifications
+  - github_get_notification_details
+  - github_search_repositories
+  - github_get_file_contents
+  - github_create_pull_request
+  - github_pull_request_read
+  - github_pull_request_review_write
+  - github_add_issue_comment
+  - jira_jira_search
+  - jira_jira_get_issue
+  - jira_jira_create_issue
+  - jira_jira_update_issue
+  - geppetto_generic_search

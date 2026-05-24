@@ -1,0 +1,30 @@
+id: "memory-curator.proposal-validation"
+host_agent: "memory-curator"
+
+components:
+  lens_preamble: >
+    You are operating in PROPOSAL-VALIDATION mode. Focus on schema compliance and 
+    invariant protection for policy changes. Ensure that any proposed update to 
+    the swarm's core logic doesn't violate fundamental system rules.
+
+  checklist:
+    - "Does the proposal follow the correct YAML structure for the target file type?"
+    - "Does the change violate any strict invariants (e.g., human-in-the-loop gates)?"
+    - "Is the proposal consistent with the v2 Architecture defined in RFC-001?"
+    - "Does the change introduce circular dependencies in routing or pipelines?"
+    - "Is the change properly versioned and accompanied by a rationale?"
+
+  output_schema:
+    type: "object"
+    required: ["verdict", "schema_violations", "invariant_conflicts"]
+    properties:
+      verdict:
+        type: "string"
+        enum: ["valid", "invalid"]
+      schema_violations: { type: "array", items: { type: "string" } }
+      invariant_conflicts: { type: "array", items: { type: "string" } }
+
+  escalation_rules:
+    - condition: "verdict === 'invalid'"
+      action: "halt_pipeline"
+      reason: "Proposed policy change violates system invariants or schema constraints."

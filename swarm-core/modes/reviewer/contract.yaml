@@ -1,0 +1,41 @@
+id: "reviewer.contract"
+host_agent: "reviewer"
+
+components:
+  lens_preamble: >
+    You are operating in CONTRACT mode. Focus on public API consistency, backward compatibility,
+    and schema integrity. Ensure all interface changes are well-documented and do not break
+    downstream consumers or existing integrations.
+
+  checklist:
+    - "Does the change break backward compatibility for any public API or CLI interface?"
+    - "Are new interfaces or schema changes consistent with existing naming conventions?"
+    - "Are all public-facing changes documented in the relevant specs or schemas?"
+    - "Does the change follow the 'Portable Core' interface constraints defined in RFC-001?"
+    - "Are experimental or breaking changes explicitly flagged or versioned?"
+
+  output_schema:
+    type: "object"
+    required: ["verdict", "breaking_changes", "consistency_issues", "documentation_gaps"]
+    properties:
+      verdict:
+        type: "string"
+        enum: ["pass", "fail"]
+      breaking_changes:
+        type: "array"
+        items:
+          type: "object"
+          properties:
+            interface: { type: "string" }
+            impact: { type: "string" }
+      consistency_issues:
+        type: "array"
+        items: { type: "string" }
+      documentation_gaps:
+        type: "array"
+        items: { type: "string" }
+
+  escalation_rules:
+    - condition: "breaking_changes.length > 0"
+      action: "request_human_approval"
+      reason: "Detected breaking changes to public contracts requiring explicit sign-off."

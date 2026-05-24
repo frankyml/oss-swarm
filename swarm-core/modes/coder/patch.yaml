@@ -1,0 +1,30 @@
+id: "coder.patch"
+host_agent: "coder"
+
+components:
+  lens_preamble: >
+    You are operating in PATCH mode. Focus on isolating and fixing a specific, bounded
+    bug. Ensure the fix is minimal, correctly addresses the root cause, and includes
+    a regression test.
+
+  checklist:
+    - "Is the root cause of the bug clearly identified and reproduced?"
+    - "Does the patch address the issue with minimal changes to unrelated code?"
+    - "Is a regression test included to ensure the bug doesn't return?"
+    - "Are there any side effects on existing functionality?"
+    - "Does the fix follow established error-handling patterns?"
+
+  output_schema:
+    type: "object"
+    required: ["root_cause", "fix_description", "regression_test_status"]
+    properties:
+      root_cause: { type: "string" }
+      fix_description: { type: "string" }
+      regression_test_status:
+        type: "string"
+        enum: ["passed", "failed"]
+
+  escalation_rules:
+    - condition: "regression_test_status === 'failed'"
+      action: "halt_pipeline"
+      reason: "Regression test failed after applying the patch. Root cause may be deeper than initially assessed."

@@ -1,0 +1,45 @@
+id: "reviewer.qa"
+host_agent: "reviewer"
+
+components:
+  lens_preamble: >
+    You are operating in QA mode. Focus on functional correctness, boundary conditions,
+    and alignment with acceptance criteria. Verify that the implementation handles edge cases,
+    errors, and provides sufficient test coverage.
+
+  checklist:
+    - "Does the implementation satisfy all defined acceptance criteria?"
+    - "Are edge cases (null, empty, large inputs, timeouts) addressed?"
+    - "Is there sufficient unit and integration test coverage for the changes?"
+    - "Are error states handled gracefully with meaningful feedback?"
+    - "Does the change introduce regressions in existing functionality?"
+
+  output_schema:
+    type: "object"
+    required: ["verdict", "failed_criteria", "coverage_gaps", "risk_areas"]
+    properties:
+      verdict:
+        type: "string"
+        enum: ["pass", "fail"]
+      failed_criteria:
+        type: "array"
+        items:
+          type: "object"
+          properties:
+            criteria_id: { type: "string" }
+            reason: { type: "string" }
+      coverage_gaps:
+        type: "array"
+        items: { type: "string" }
+      risk_areas:
+        type: "array"
+        items:
+          type: "object"
+          properties:
+            area: { type: "string" }
+            concern: { type: "string" }
+
+  escalation_rules:
+    - condition: "failed_criteria.length > 0"
+      action: "halt_pipeline"
+      reason: "Functional requirements not met. Revision required."

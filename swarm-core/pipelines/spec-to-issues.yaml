@@ -1,0 +1,48 @@
+id: "pipeline.spec-to-issues"
+description: "Transforms product requirements into validated engineering issues"
+
+stages:
+  - id: "requirement_analysis"
+    agent: "researcher"
+    modes: ["survey"]
+    parallel: false
+    mandatory: true
+    contract:
+      must_provide: ["requirement_clarifications.md", "domain_map.json"]
+      must_not_provide: ["issue_definitions"]
+
+  - id: "story_breakdown"
+    agent: "spec-writer"
+    modes: ["story-breakdown"]
+    parallel: false
+    mandatory: true
+    contract:
+      must_provide: ["functional_specs.json", "issue_drafts.json"]
+      must_not_provide: ["code_implementation"]
+
+  - id: "validation_layer"
+    parallel: true
+    mandatory: true
+    sub_stages:
+      - id: "product_validation"
+        agent: "reviewer"
+        modes: ["product"]
+        contract:
+          must_provide: ["product_alignment_report.md"]
+          must_not_provide: []
+
+      - id: "contract_review"
+        agent: "reviewer"
+        modes: ["contract"]
+        contract:
+          must_provide: ["interface_validation.json"]
+          must_not_provide: []
+
+  - id: "memory_consolidation"
+    agent: "memory-curator"
+    modes: ["append"]
+    parallel: false
+    mandatory: true
+    contract:
+      must_provide: ["memory_patch"]
+      must_not_provide: ["workspace_artifacts"]
